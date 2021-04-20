@@ -21,5 +21,6 @@ solver_params = {
 }
 
 test_params = {
-
+    'conf_threshold': 0.001,
+    'iou_threshold': 0.6
 }
