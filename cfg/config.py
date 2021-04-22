@@ -9,7 +9,9 @@ path_params = {
 
 
 model_params = {
-
+    'input_shape': [800, 800],
+    'strides': [8, 16, 32],
+    'class_num': 5,
 }
 
 solver_params = {
@@ -21,6 +23,6 @@ solver_params = {
 }
 
 test_params = {
-    'conf_threshold': 0.001,
-    'iou_threshold': 0.6
+    'score_threshold': 0.3,
+    'iou_threshold': 0.4
 }
