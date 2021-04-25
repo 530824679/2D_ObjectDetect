@@ -33,7 +33,6 @@ def conv(input, out_channels, ksize, stride, name='conv', add_bias=False):
         net = tf.nn.bias_add(net,bias)
     return net
 
-
 def convBnLeakly(input, out_channels, ksize, stride, name):
     with tf.variable_scope(name):
         net = conv(input, out_channels, ksize, stride)

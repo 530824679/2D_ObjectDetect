@@ -2,16 +2,21 @@
 import os
 
 path_params = {
-    'data_path': "./data",
+    'data_path': "/home/chenwei/HDD/Project/2D_ObjectDetect/datasets/self_datasets",
+    'root_path': '/home/chenwei/HDD/Project/2D_ObjectDetect/datasets',
+    'class_file': '/home/chenwei/HDD/Project/2D_ObjectDetect/data/classes.txt',
+    'train_file': '/home/chenwei/HDD/Project/2D_ObjectDetect/data/train.txt',
+    'anchor_file': '/home/chenwei/HDD/Project/2D_ObjectDetect/data/anchors.txt',
+    'logs_dir': './logs',
+    'checkpoint_name': '2D_OD',
     'checkpoints_dir': './checkpoints',
-
 }
 
 
 model_params = {
     'input_shape': [800, 800],
     'strides': [8, 16, 32],
-    'class_num': 5,
+    'anchor_per_scale': 3,
 }
 
 solver_params = {

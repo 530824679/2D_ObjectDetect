@@ -1,0 +1,8 @@
+Person
+Rider
+Bike
+Motocycle
+Car
+Truck
+Bus
+Obstacle

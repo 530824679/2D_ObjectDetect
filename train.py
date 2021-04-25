@@ -1,17 +1,30 @@
+# -*- coding: utf-8 -*-
+# --------------------------------------
+# @Time    : 2020/11/01
+# @Author  : Oscar Chen
+# @Email   : 530824679@qq.com
+# @File    : train.py
+# Description : train code
+# --------------------------------------
 
 import os
-import torch
-
-from utils.gpu import *
+import tensorflow as tf
+from cfg.config import *
+from model.network import Network
+from data import dataset, tfrecord
 
 def train():
 
-    device =torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    cuda = device.type == "cuda"
-    if cuda:
-        get_gpu_prop()
-    print("\ndevice: {}".format(device))
+    # Set sess configuration
+    gpu_options = tf.ConfigProto(allow_soft_placement=True)
+    gpu_options.gpu_options.allow_growth = True
+    gpu_options.gpu_options.allocator_type = 'BFC'
+    sess = tf.Session(config=gpu_options)
 
-    # Dataset Load
-    dataset_train = yolo.datasets(args.dataset, file_roots[0], ann_files[0], train=True)
-    dataset_test = yolo.datasets(args.dataset, file_roots[1], ann_files[1], train=True)  # set train=True for eval
+    # 解析得到训练样本以及标注
+    train_dataset = DatasetFeeder(flags='train')
+    steps_per_epoch = len(train_dataset)
+
+    # define graph input tensor
+    with tf.variable_scope(name_or_scope='graph_input_node'):
+        input_src_image, input_binary_label_image, input_instance_label_image = train_dataset.next_batch(batch_size=solver_params['batch_size'])
