@@ -17,6 +17,8 @@ model_params = {
     'input_shape': [800, 800],
     'strides': [8, 16, 32],
     'anchor_per_scale': 3,
+    'label_smoothing': 0.01,
+    'iou_threshold': 0.5
 }
 
 solver_params = {
