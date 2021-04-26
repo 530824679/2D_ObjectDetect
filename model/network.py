@@ -14,7 +14,7 @@ from model.basenet import *
 from utils.data_utils import *
 
 class Network(object):
-    def __init__(self, inputs, is_train):
+    def __init__(self, is_train):
         self.is_train = is_train
         self.anchors = read_anchors(path_params['anchor_file'])
         self.classes = read_class_names(path_params['class_file'])

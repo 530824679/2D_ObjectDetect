@@ -10,6 +10,7 @@ path_params = {
     'logs_dir': './logs',
     'checkpoint_name': '2D_OD',
     'checkpoints_dir': './checkpoints',
+    'initial_weight': './weight/model.ckpt'
 }
 
 
@@ -24,6 +25,9 @@ model_params = {
 solver_params = {
     'total_epoches': 2000,
     'batch_size': 8,
+    'warmup_epoches': 10,
+    'first_stage_epochs': 100,
+    'second_stage_epochs': 1000,
     'init_learning_rate': 0.0001,
     'momentum': 0.9,
     'weight_decay': 0.0005
