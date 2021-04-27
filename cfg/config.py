@@ -2,7 +2,7 @@
 import os
 
 path_params = {
-    'data_path': "/home/chenwei/HDD/Project/2D_ObjectDetect/datasets/self_datasets",
+    'data_path': "/home/chenwei/HDD/Project/2D_ObjectDetect/datasets/self_datasets/voc",
     'root_path': '/home/chenwei/HDD/Project/2D_ObjectDetect/datasets',
     'class_file': '/home/chenwei/HDD/Project/2D_ObjectDetect/data/classes.txt',
     'train_file': '/home/chenwei/HDD/Project/2D_ObjectDetect/data/train.txt',
@@ -15,7 +15,7 @@ path_params = {
 
 
 model_params = {
-    'input_shape': [800, 800],
+    'input_shape': [640, 640],
     'strides': [8, 16, 32],
     'anchor_per_scale': 3,
     'label_smoothing': 0.01,
