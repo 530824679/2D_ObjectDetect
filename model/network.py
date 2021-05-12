@@ -44,46 +44,46 @@ class Network(object):
     def build_network(self, inputs):
 
         # backbone
-        self.focus_0 = focus(inputs, 64, 3, 'model/0')
-        self.conv_1 = convBnLeakly(self.focus_0, 128, 3, 2, "model/1")
-        self.bottleneck_csp_2 = bottleneckCSP(self.conv_1, 128, 128, 3, True, 0.5, "model/2")
-        self.conv_3 = convBnLeakly(self.bottleneck_csp_2, 256, 3, 2, 'model/3')
-        self.bottleneck_csp_4 = bottleneckCSP(self.conv_3, 256, 256, 9, True, 0.5, 'model/4')
-        self.conv_5 = convBnLeakly(self.bottleneck_csp_4, 512, 3, 2, 'model/5')
-        self.bottleneck_csp_6 = bottleneckCSP(self.conv_5, 512, 512, 9, True, 0.5, 'model/6')
-        self.conv_7 = convBnLeakly(self.bottleneck_csp_6, 1024, 3, 2, 'model/7')
-        self.spp_8 = spp(self.conv_7, 1024, 1024, 5, 9, 13, 'model/8')
+        focus_0 = focus(inputs, 64, 3, 'model/0')
+        conv_1 = convBnLeakly(focus_0, 128, 3, 2, "model/1")
+        bottleneck_csp_2 = bottleneckCSP(conv_1, 128, 128, 3, True, 0.5, "model/2")
+        conv_3 = convBnLeakly(bottleneck_csp_2, 256, 3, 2, 'model/3')
+        bottleneck_csp_4 = bottleneckCSP(conv_3, 256, 256, 9, True, 0.5, 'model/4')
+        conv_5 = convBnLeakly(bottleneck_csp_4, 512, 3, 2, 'model/5')
+        bottleneck_csp_6 = bottleneckCSP(conv_5, 512, 512, 9, True, 0.5, 'model/6')
+        conv_7 = convBnLeakly(bottleneck_csp_6, 1024, 3, 2, 'model/7')
+        spp_8 = spp(conv_7, 1024, 1024, 5, 9, 13, 'model/8')
 
         # neck
-        self.bottleneck_csp_9 = bottleneckCSP(self.spp_8, 1024, 1024, 3, False, 0.5, 'model/9')
-        self.conv_10 = convBnLeakly(self.bottleneck_csp_9, 512, 1, 1, 'model/10')
+        bottleneck_csp_9 = bottleneckCSP(spp_8, 1024, 1024, 3, False, 0.5, 'model/9')
+        conv_10 = convBnLeakly(bottleneck_csp_9, 512, 1, 1, 'model/10')
 
-        shape = [self.conv_10.shape[1].value * 2, self.conv_10.shape[2].value * 2]
+        shape = [conv_10.shape[1].value * 2, conv_10.shape[2].value * 2]
         # 0：双线性差值。1：最近邻居法。2：双三次插值法。3：面积插值法
-        self.deconv_11 = tf.image.resize_images(self.conv_10, shape, method=1)
+        deconv_11 = tf.image.resize_images(conv_10, shape, method=1)
 
-        self.concat_12 = tf.concat((self.deconv_11, self.bottleneck_csp_6), -1)
-        self.bottleneck_csp_13 = bottleneckCSP(self.concat_12, 1024, 512, 3, False, 0.5, 'model/13')
-        self.conv_14 = convBnLeakly(self.bottleneck_csp_13, 256, 1, 1, 'model/14')
+        concat_12 = tf.concat((deconv_11, bottleneck_csp_6), -1)
+        bottleneck_csp_13 = bottleneckCSP(concat_12, 1024, 512, 3, False, 0.5, 'model/13')
+        conv_14 = convBnLeakly(bottleneck_csp_13, 256, 1, 1, 'model/14')
 
-        shape = [self.conv_14.shape[1].value * 2, self.conv_14.shape[2].value * 2]
-        self.deconv_15 = tf.image.resize_images(self.conv_14, shape, method=1)
+        shape = [conv_14.shape[1].value * 2, conv_14.shape[2].value * 2]
+        deconv_15 = tf.image.resize_images(conv_14, shape, method=1)
 
-        self.concat_16 = tf.concat((self.deconv_15, self.bottleneck_csp_4), -1)
-        self.bottleneck_csp_17 = bottleneckCSP(self.concat_16, 512, 256, 3, False, 0.5, 'model/17')
-        self.conv_18 = convBnLeakly(self.bottleneck_csp_17, 256, 3, 2, 'model/18')
+        concat_16 = tf.concat((deconv_15, bottleneck_csp_4), -1)
+        bottleneck_csp_17 = bottleneckCSP(concat_16, 512, 256, 3, False, 0.5, 'model/17')
+        conv_18 = convBnLeakly(bottleneck_csp_17, 256, 3, 2, 'model/18')
 
-        self.concat_19 = tf.concat((self.conv_18, self.conv_14), -1)
-        self.bottleneck_csp_20 = bottleneckCSP(self.concat_19, 512, 512, 3, False, 0.5, 'model/20')
-        self.conv_21 = convBnLeakly(self.bottleneck_csp_20, 512, 3, 2, 'model/21')
+        concat_19 = tf.concat((conv_18, conv_14), -1)
+        bottleneck_csp_20 = bottleneckCSP(concat_19, 512, 512, 3, False, 0.5, 'model/20')
+        conv_21 = convBnLeakly(bottleneck_csp_20, 512, 3, 2, 'model/21')
 
-        self.concat_22 = tf.concat((self.conv_21, self.conv_10), -1)
-        self.bottleneck_csp_23 = bottleneckCSP(self.concat_22, 1024, 1024, 3, False, 0.5, 'model/23')
+        concat_22 = tf.concat((conv_21, conv_10), -1)
+        bottleneck_csp_23 = bottleneckCSP(concat_22, 1024, 1024, 3, False, 0.5, 'model/23')
 
         # head
-        conv_24_m0 = conv(self.bottleneck_csp_17, 3 * (self.class_num + 5), 1, 1, 'model/24/m/0', add_bias=True)
-        conv_24_m1 = conv(self.bottleneck_csp_20, 3 * (self.class_num + 5), 1, 1, 'model/24/m/1', add_bias=True)
-        conv_24_m2 = conv(self.bottleneck_csp_23, 3 * (self.class_num + 5), 1, 1, 'model/24/m/2', add_bias=True)
+        conv_24_m0 = conv(bottleneck_csp_17, 3 * (self.class_num + 5), 1, 1, 'model/24/m/0', add_bias=True)
+        conv_24_m1 = conv(bottleneck_csp_20, 3 * (self.class_num + 5), 1, 1, 'model/24/m/1', add_bias=True)
+        conv_24_m2 = conv(bottleneck_csp_23, 3 * (self.class_num + 5), 1, 1, 'model/24/m/2', add_bias=True)
 
         return conv_24_m0, conv_24_m1, conv_24_m2
 

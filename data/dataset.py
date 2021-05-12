@@ -31,7 +31,6 @@ class Dataset(object):
         self.anchor_per_scale = model_params['anchor_per_scale']
         self.classes = read_class_names(path_params['class_file'])
         self.class_num = len(self.classes)
-        self.max_bbox_per_scale = model_params['max_bbox_per_scale']
 
     def load_image(self, image_num):
         image_path = os.path.join(self.data_path, 'JPEGImages', image_num + '.jpg')
@@ -62,7 +61,7 @@ class Dataset(object):
             ymax = bndbox.find('ymax').text
 
             # 将类别由字符串转换为对应的int数
-            class_index = self.cls_type_to_id(object.find('name').text.lower().strip())
+            class_index = self.cls_type_to_id(object.find('name').text.strip())
 
             box = [xmin, ymin, xmax, ymax, class_index]
             bboxes.append(box)
@@ -71,10 +70,10 @@ class Dataset(object):
 
     def cls_type_to_id(self, data):
         type = data
-        if type not in classes_map.keys():
+        if type not in self.classes.keys():
             print("class is:{}".format(type))
             return -1
-        return classes_map[type]
+        return self.classes[type]
 
     def preprocess_data(self, image, boxes, input_height, input_width):
         image = np.array(image)
@@ -116,11 +115,11 @@ class Dataset(object):
         anchor_mask = [[6, 7, 8], [3, 4, 5], [0, 1, 2]]
         feature_map_sizes = [input_shape // 32, input_shape // 16, input_shape // 8]
 
-        y_true_13 = np.zeros(shape=[feature_map_sizes[0][0], feature_map_sizes[0][1], 3, 5 + num_classes], dtype=np.float32)
-        y_true_26 = np.zeros(shape=[feature_map_sizes[1][0], feature_map_sizes[1][1], 3, 5 + num_classes], dtype=np.float32)
-        y_true_52 = np.zeros(shape=[feature_map_sizes[2][0], feature_map_sizes[2][1], 3, 5 + num_classes], dtype=np.float32)
+        y_true_17 = np.zeros(shape=[feature_map_sizes[0][0], feature_map_sizes[0][1], 3, 5 + num_classes], dtype=np.float32)
+        y_true_20 = np.zeros(shape=[feature_map_sizes[1][0], feature_map_sizes[1][1], 3, 5 + num_classes], dtype=np.float32)
+        y_true_23 = np.zeros(shape=[feature_map_sizes[2][0], feature_map_sizes[2][1], 3, 5 + num_classes], dtype=np.float32)
 
-        y_true = [y_true_13, y_true_26, y_true_52]
+        y_true = [y_true_17, y_true_20, y_true_23]
 
         # convert boxes from (min_x, min_y, max_x, max_y) to (x, y, w, h)
         boxes_xy = (labels[:, 0:2] + labels[:, 2:4]) / 2
@@ -168,4 +167,4 @@ class Dataset(object):
             y_true[feature_map_group][j, i, k, 4] = 1
             y_true[feature_map_group][j, i, k, 5 + c] = 1
 
-        return y_true_13, y_true_26, y_true_52
+        return y_true_17, y_true_20, y_true_23

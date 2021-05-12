@@ -49,7 +49,8 @@ class Loss(object):
         with tf.name_scope('class_loss'):
             class_loss = loss_sbbox[2] + loss_mbbox[2] + loss_lbbox[2]
 
-        return iou_loss, conf_loss, class_loss
+        total_loss = iou_loss + conf_loss + class_loss
+        return total_loss, iou_loss, conf_loss, class_loss
 
     def loss_layer(self, pred_feat, pred_bbox, y_true):
         feature_shape = tf.shape(pred_feat)[1:3]

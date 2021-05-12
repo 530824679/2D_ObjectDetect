@@ -7,23 +7,27 @@
 # Description :create and parse tfrecord
 # --------------------------------------
 
+import sys
+ros_path = '/opt/ros/kinetic/lib/python2.7/dist-packages'
+if ros_path in sys.path:
+    sys.path.remove(ros_path)
+
 import os
 import cv2
 import glog as log
 import numpy as np
 import tensorflow as tf
-
+from data.dataset import Dataset
 from cfg.config import *
+from utils.data_utils import *
 
 class TFRecord(object):
     def __init__(self):
         self.data_path = path_params['data_path']
         self.tfrecord_dir = path_params['tfrecord_dir']
-        self.train_tfrecord_name = path_params['train_tfrecord_name']
-        self.input_width = model_params['input_width']
-        self.input_height = model_params['input_height']
-        self.channels = model_params['channels']
-        self.class_num = len(model_params['classes'])
+        self.input_shape = model_params['input_shape']
+        self.classes = read_class_names(path_params['class_file'])
+        self.class_num = len(self.classes)
         self.batch_size = solver_params['batch_size']
         self.dataset = Dataset()
 
@@ -44,9 +48,9 @@ class TFRecord(object):
 
     def create_tfrecord(self):
         # 获取作为训练验证集的图片序列
-        trainval_path = os.path.join(self.data_path, 'ImageSets', 'Main', 'trainval.txt')
+        trainval_path = os.path.join(self.data_path, 'ImageSets', 'Main', 'train.txt')
 
-        tf_file = os.path.join(self.tfrecord_dir, self.train_tfrecord_name)
+        tf_file = os.path.join(self.tfrecord_dir, 'train.tfrecord')
         if os.path.exists(tf_file):
             os.remove(tf_file)
 
@@ -104,9 +108,9 @@ class TFRecord(object):
         tf_label = tf.reshape(tf_bbox, [300, 5])
 
         # preprocess
-        tf_image, y_true_13, y_true_26, y_true_52 = tf.py_func(self.dataset.preprocess_data, inp=[tf_image, tf_label, self.input_height, self.input_width], Tout=[tf.float32, tf.float32, tf.float32, tf.float32])
+        tf_image, y_true_17, y_true_20, y_true_23 = tf.py_func(self.dataset.preprocess_data, inp=[tf_image, tf_label, self.input_shape[0], self.input_shape[1]], Tout=[tf.float32, tf.float32, tf.float32, tf.float32])
 
-        return tf_image, y_true_13, y_true_26, y_true_52
+        return tf_image, y_true_17, y_true_20, y_true_23
 
     def create_dataset(self, filenames, batch_num, batch_size=1, is_shuffle=False):
         """
@@ -124,39 +128,41 @@ class TFRecord(object):
         dataset = dataset.repeat()
         dataset = dataset.prefetch(batch_size)
 
-    if __name__ == '__main__':
-        tfrecord = TFRecord()
-        tfrecord.create_tfrecord()
+        return dataset
 
-        # import cv2
-        # import matplotlib.pyplot as plt
-        # record_file = '../tfrecord/train.tfrecord'
-        # data_train = tfrecord.create_dataset(record_file, batch_num=1, batch_size=1, is_shuffle=False)
-        # # data_train = tf.data.TFRecordDataset(record_file)
-        # # data_train = data_train.map(tfrecord.parse_single_example)
-        # iterator = data_train.make_one_shot_iterator()
-        # #batch_image, y_true_13, y_true_26, y_true_52 = iterator.get_next()
-        # batch_image, batch_boxes = iterator.get_next()
-        #
-        # with tf.Session() as sess:
-        #     for i in range(20):
-        #         try:
-        #             #images_, y_true_13_, y_true_26_, y_true_52_ = sess.run([batch_image, y_true_13, y_true_26, y_true_52])
-        #             images_, boxes_ = sess.run([batch_image, batch_boxes])
-        #             # for images_i, y_true_13_i, y_true_26_i, y_true_52_i in zip(images_, y_true_13_, y_true_26_, y_true_52_):
-        #
-        #             boxes_ = boxes_[..., 0:4]
-        #             valid = (np.sum(boxes_, axis=-1) > 0).tolist()
-        #             valid = valid[0]
-        #             boxes_ = boxes_[0, ...]
-        #             boxes_ = boxes_[valid]
-        #
-        #             #print([int(idx) for idx in boxes_])
-        #             for box in boxes_.tolist():
-        #                 cv2.rectangle(images_[0], (int(box[0]), int(box[1])), (int(box[2]), int(box[3])), (255, 0, 0), 2)
-        #             cv2.imshow("image", images_[0])
-        #             cv2.waitKey(0)
-        #             #print(images_.shape, y_true_13_.shape)
-        #         except tf.errors.OutOfRangeError:
-        #             print("Done!!!")
-        #             break
+if __name__ == '__main__':
+    tfrecord = TFRecord()
+    # tfrecord.create_tfrecord()
+
+    import cv2
+    import matplotlib.pyplot as plt
+    record_file = '/home/chenwei/HDD/Project/2D_ObjectDetect/datasets/tfrecords/train.tfrecord'
+    data_train = tfrecord.create_dataset(record_file, batch_num=1, batch_size=1, is_shuffle=False)
+    # data_train = tf.data.TFRecordDataset(record_file)
+    # data_train = data_train.map(tfrecord.parse_single_example)
+    iterator = data_train.make_one_shot_iterator()
+    #batch_image, y_true_13, y_true_26, y_true_52 = iterator.get_next()
+    batch_image, batch_boxes = iterator.get_next()
+
+    with tf.Session() as sess:
+        for i in range(20):
+            try:
+                #images_, y_true_13_, y_true_26_, y_true_52_ = sess.run([batch_image, y_true_13, y_true_26, y_true_52])
+                images_, boxes_ = sess.run([batch_image, batch_boxes])
+                # for images_i, y_true_13_i, y_true_26_i, y_true_52_i in zip(images_, y_true_13_, y_true_26_, y_true_52_):
+
+                boxes_ = boxes_[..., 0:4]
+                valid = (np.sum(boxes_, axis=-1) > 0).tolist()
+                valid = valid[0]
+                boxes_ = boxes_[0, ...]
+                boxes_ = boxes_[valid]
+
+                #print([int(idx) for idx in boxes_])
+                for box in boxes_.tolist():
+                    cv2.rectangle(images_[0], (int(box[0]), int(box[1])), (int(box[2]), int(box[3])), (255, 0, 0), 2)
+                cv2.imshow("image", images_[0])
+                cv2.waitKey(0)
+                #print(images_.shape, y_true_13_.shape)
+            except tf.errors.OutOfRangeError:
+                print("Done!!!")
+                break

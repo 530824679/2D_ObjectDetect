@@ -4,8 +4,10 @@ import json
 import glob
 import shutil
 from tqdm import tqdm
+from PIL import Image
 from shutil import copy
 import numpy as np
+import tensorflow as tf
 
 def rename_datas(root_path, dst_path):
     src_image_dir = os.path.join(root_path, "images")
@@ -38,28 +40,30 @@ def get_files(path, _ends=['*.json']):
     file_num = len(all_files)
     return all_files, file_num
 
-def get_path(result_dict):
-    obj_path = result_dict['path']
-    obj_path = obj_path.split('/')[-1]
-    return obj_path
-
 def get_size(result_dict):
     obj_size = result_dict['size']
     width = obj_size["width"]
     height = obj_size["height"]
-    return width,height
+    return width, height
 
-def get_text_mark(file_path, out_Annotations_path):
+def write_to_txt(out_txt_path,result):
+    with open(os.path.join(out_txt_path, 'train.txt'), 'w') as json_file:
+        for text in result:
+            #print(text)
+            json_file.write(text + '\n')
+
+def get_text_mark(file_path, voc_file_path, out_Annotations_path):
     xml_content = []
+    print(file_path)
+    name = file_path.split('/')[-1]
+    name = name.split('.')[0]
     with open(file_path, 'r', encoding='utf-8') as fid:
         result_dict = json.load(fid)
         obj = result_dict['outputs']['object']
-        file_name = get_path(result_dict)
-        name = file_name.split('.')[0]
         width, height = get_size(result_dict)
         xml_content.append("<annotation>")
-        xml_content.append("	<folder>" + name+'.jpg' + "</folder>")
-        xml_content.append("	<filename>" + file_name + "</filename>")
+        xml_content.append("	<folder>" + voc_file_path + "</folder>")
+        xml_content.append("	<filename>" + name + '.jpg' + "</filename>")
         xml_content.append("	<size>")
         xml_content.append("		<width>" + str(width) + "</width>")
         xml_content.append("		<height>" + str(height) + "</height>")
@@ -88,7 +92,7 @@ def get_text_mark(file_path, out_Annotations_path):
         xml_content.append("</annotation>")
         x = xml_content
         xml_content = [x[i] for i in range(0, len(x)) if x[i] != "\n"]
-        xml_path = os.path.join(out_Annotations_path, file_name.replace('.png', '.xml'))
+        xml_path = os.path.join(out_Annotations_path, name + '.xml')
         with open(xml_path, 'w+', encoding="utf8") as f:
             f.write('\n'.join(xml_content))
         xml_content[:] = []
@@ -99,35 +103,40 @@ def json2voc(src_path, dst_path):
     src_label_dir = os.path.join(src_path, "labels")
 
     dst_Annotations_dir = os.path.join(dst_path, "Annotations")
-    dst_ImageSets_dir = os.path.join(dst_path, "ImageSets\Main")
+    dst_ImageSets_dir = os.path.join(dst_path, "ImageSets/Main")
     dst_JPEGImages_dir = os.path.join(dst_path, "JPEGImages")
 
-    files, files_len = get_files(src_label_dir)
-    bar = tqdm(total=files_len)
-    for file in files:
-        bar.update(1)
+    train_list = []
+    filelist = os.listdir(src_image_dir)
+    for i in filelist:
         try:
-            get_text_mark(file, dst_Annotations_dir)
+            src = os.path.join(os.path.abspath(src_image_dir), i)
+            name = i.split('.')[0]
+            # print(name)
+            train_list.append(name)
+
+            dst = os.path.join(os.path.abspath(dst_JPEGImages_dir), name + '.jpg')
+            im = Image.open(src)
+            im = im.convert('RGB')
+            im.save(dst, quality=95)
+        except:
+            print(i + 'wrong')
+            continue
+        write_to_txt(dst_ImageSets_dir, train_list)
+
+    files, files_len = get_files(src_label_dir)
+    for file in files:
+        try:
+            get_text_mark(file, dst_path, dst_Annotations_dir)
         except:
             print(file + 'wrong')
             continue
-
-    filelist = os.listdir(src_image_dir)
-    for i in filelist:
-        src = os.path.join(os.path.abspath(src_image_dir), i)
-        # 重命名
-        dst = os.path.join(os.path.abspath(dst_JPEGImages_dir), i.split('.')[0] + '.png')
-        # 执行操作
-        copy(src, dst)
-
-    bar.close()
-
 
 def read_class_names(classes_file):
     names = {}
     with open(classes_file, 'r') as data:
         for id, name in enumerate(data):
-            name[id] = name.strip('\n')
+            names[name.strip('\n')] = id
 
     return names
 
@@ -135,8 +144,15 @@ def read_anchors(anchors_file):
     with open(anchors_file) as f:
         anchors = f.readline()
     anchors = np.array(anchors.split(','), dtype=np.float32)
+
     return anchors.reshape(3, 3, 2)
 
+def total_sample(file_name):
+    sample_nums = 0
+    for record in tf.python_io.tf_record_iterator(file_name):
+        sample_nums += 1
+
+    return sample_nums
 
 
 
